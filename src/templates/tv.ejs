@@ -1,0 +1,59 @@
+<%- include('header'); -%>
+
+<div class="container p-5">
+  <div id="movie-details" class="d-flex">
+    <div class="image-poster">
+      <img src="https://image.tmdb.org/t/p/w440_and_h660_face<%= tv.poster_path %>" alt="poster">
+    </div>
+    <div class="px-3">
+      <h1 class="title"><%= tv.name %></h1>
+      <p class="overview">
+        <%= tv.overview %>
+      </p>
+      <select name="season" id="season" class="form-select" data-focusable>
+        <% tv.seasons.forEach(season => { %>
+        <option value="<%= season.season_number %>">Season <%= season.season_number %></option>
+        <% }); %>
+      </select>
+    </div>
+  </div>
+  <div>
+    <h2 class="mt-5">Episodes</h2>
+    <div class="d-flex flex-wrap">
+      <% tv.season.episodes.forEach(episode => { %>
+      <div class="card m-2" style="width: 200px;">
+        <a href="/tv/<%= tv.id %>/s/<%= tv.season.season_number %>/e/<%= episode.episode_number %>" data-focusable>
+          <img src="https://image.tmdb.org/t/p/w440_and_h660_face<%= episode.still_path %>" class="card-img">
+        </a>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('keydown', function(e) {
+    console.log(e.keyCode);
+    switch(e.keyCode) {
+      case 10009:
+        window.location.href = '/';
+        break;
+    }
+
+    const focusableElements = Array.from(document.querySelectorAll('[data-focusable]'));
+    const currentIndex = focusableElements.indexOf(document.activeElement);
+
+    if (e.keyCode === 40 || e.keyCode === 39) {
+        const nextIndex = (currentIndex + 1) % focusableElements.length;
+        focusableElements[nextIndex].focus();
+        e.preventDefault();
+    } else if (e.keyCode === 38 || e.keyCode === 37) {
+        const prevIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+        focusableElements[prevIndex].focus();
+        e.preventDefault();
+    }
+  });
+</script>
+
+<%- include('footer'); -%>

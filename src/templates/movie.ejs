@@ -1,0 +1,77 @@
+<%- include('header'); -%>
+
+<div class="container p-5">
+  <div id="movie-details" class="d-flex">
+    <div class="image-poster">
+      <img src="https://image.tmdb.org/t/p/w440_and_h660_face<%= movie.poster_path %>" alt="poster">
+    </div>
+    <div class="px-3">
+      <h1 class="title"><%= movie.title %></h1>
+      <p class="overview">
+        <%= movie.overview %>
+      </p>
+      <div>
+        <span><%= movie.runtime %></span> <span><%= movie.release_date %></span>
+      </div>
+      <% if (movie.history) { %>
+        <a class="btn btn-primary btn-lg mt-3" href="/stream/<%= movie.history.sourceId %>">Continue Watching (<%= watchedTime %>)</a>
+      <% } %>
+      <% if (movie.sources) { %>
+        <div class="my-3">
+          <h3>Sources</h3>
+          <ul class="torrent-list">
+            <% movie.sources.forEach(source => { %>
+              <li class="torrent-item">
+                <a href="/stream/<%= source.id %>" data-focusable>
+                  <div class="title"><%= source.torrent.title %></div>
+                  <div class="details">(<%= source.torrent.provider %>) - <%= source.torrent.size %></div>
+                </a>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('keydown', function(e) {
+    switch(e.keyCode) {
+      case 10009:
+        window.location.href = '/';
+        break;
+    }
+
+    const focusableElements = Array.from(document.querySelectorAll('[data-focusable]'));
+    const currentIndex = focusableElements.indexOf(document.activeElement);
+
+    if (currentIndex < 0) {
+      focusableElements[0].focus();
+      e.preventDefault();  
+      return;
+    }
+
+    let nextIndex;
+    switch(e.keyCode) {
+      case 40:
+        nextIndex = (currentIndex + 2) % focusableElements.length;
+        break;
+      case 39:
+        nextIndex = (currentIndex + 1) % focusableElements.length;
+        break;
+      case 38:
+        nextIndex = (currentIndex - 2 + focusableElements.length) % focusableElements.length;
+        break;
+      case 37:
+        nextIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+        break;
+    }
+
+    focusableElements[nextIndex].focus();
+    e.preventDefault();
+  });
+</script>
+
+<%- include('footer'); -%>

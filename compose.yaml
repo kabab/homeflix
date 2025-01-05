@@ -1,0 +1,25 @@
+services:
+  vpn:
+    build:
+      context: .
+      dockerfile: Dockerfile.vpn
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  homeflix:
+    build: .
+    ports:
+      - 3000:3000
+    environment:
+      - DATABASE_URL="file:/var/lib/homeflix/dev.db"
+    volumes:
+      - homeflix:/var/lib/homeflix
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - vpn
+
+volumes:
+  homeflix:
+

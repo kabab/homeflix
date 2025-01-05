@@ -1,0 +1,455 @@
+<%- include('header') %>
+<div id="video-loading">
+  <div class="spinner-border text-light" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+<video id="video" tabindex="0">
+  <source src="/stream/<%= source.id %>/video<%= source.tvId ? '/s/' + season + '/e/' + episode : '' %>">
+  Your browser does not support the video tag.
+</video>
+
+<div id="subtitles-container"></div>
+<div id="control">
+  <div>
+    <button id="play-pause" class="pause">
+      <i class="bi bi-play-fill"></i>
+      <i class="bi bi-pause-fill"></i>
+    </button>
+  </div>
+  <div>
+    <button id="subtitles" data-bs-toggle="modal" data-bs-target="#subtitle-modal">
+      <i class="bi bi-chat-right-text"></i>
+    </button>
+  </div>
+  <div id="progress-time">00:00:00 / 00:00:00</div>
+  <div id="progress" tabindex="0" role="button">
+    <div id="progress-bar-container">
+      <div id="progress-bar">
+        <div id="progress-seeker">
+          <div id="progress-seeker-time">00:00:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="subtitle-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Content here -->
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function formatTime(time) {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = Math.floor(time % 60);
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  class VideoPlayer {
+    constructor() {// (videoId, controlId, progressContainerId, playPauseButtonId, progressTimeId, progressBarId, progressSeekerId, progressSeekerTimeId) {
+      this.video = document.querySelector("video");
+      this.control = document.querySelector("#control");
+      this.progressContainer = document.querySelector("#progress-bar-container");
+      this.playPauseButton = document.querySelector("#play-pause");
+      this.progressTime = document.querySelector("#progress-time");
+      this.progressBar = document.querySelector("#progress-bar");
+      this.progressSeeker = document.querySelector("#progress-seeker");
+      this.progressSeekerTime = document.querySelector("#progress-seeker-time");
+      this.progress = document.querySelector("#progress");
+      this.subtitlesButton = document.querySelector("#subtitles");
+      this.subtitlesContainer = document.querySelector("#subtitles-container");
+      this.subtitlesModal = document.querySelector("#subtitle-modal");
+      this.lastReportedTime = 120;
+      this.controlsVisible = false;
+      this.hideControlTimeout = null;
+      this.askedCurrentTime = 0;
+      this.currentMode = "IDLE";
+      this.selectedControl = 0;
+      this.reportTimeInterval = null;
+      this.subtitles = [];
+      this.controlsList = [
+        this.playPauseButton,
+        this.subtitlesButton,
+        this.progress,
+      ]
+    }
+
+    /***
+     * @param {string} time
+     * @returns {number} time in milliseconds
+     */
+    parseTime(time) {
+      const [hours, minutes, seconds] = time.split(":");
+      return parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseFloat(seconds);
+    }
+
+    startReportingTime() {
+      this.reportTimeInterval = setInterval(this.reportCurrentTime.bind(this), 30000);
+    }
+
+    reportCurrentTime() {
+
+      if (this.video.paused || this.lastReportedTime + 30 > this.video.currentTime) {
+        return;
+      }
+
+      this.lastReportedTime = this.video.currentTime;
+
+
+      fetch("/history/movies/<%= source.id %>", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lastSecond: this.lastReportedTime,
+          duration: this.video.duration,
+        }),
+      });
+    }
+
+    setupEventListener() {
+      const self = this;
+      this.video.addEventListener("mousemove", () => {
+        self.showControls();
+        if (self.currentMode === "IDLE" && !self.video.paused) {
+          if (self.hideControlTimeout) {
+            clearTimeout(self.hideControlTimeout);
+          }
+          self.hideControlTimeout = setTimeout(() => {
+            self.hideControls();
+          }, 2000);
+        }
+      });
+
+      this.video.addEventListener('play', () => {
+        this.playPauseButton.classList.add("play");
+        this.playPauseButton.classList.remove("pause");
+      });
+
+      this.video.addEventListener('pause', () => {
+        this.playPauseButton.classList.add("pause");
+        this.playPauseButton.classList.remove("play");
+      });
+
+      this.playPauseButton.addEventListener("click", this.togglePlay.bind(this));
+
+      this.video.addEventListener("click", () => {
+        if (this.video.paused) {
+          this.video.play();
+        } else {
+          this.video.pause();
+        }
+      });
+
+      this.progressContainer.addEventListener('click', (e) => {
+        const progress = e.offsetX / this.progressContainer.offsetWidth;
+        this.video.currentTime = this.video.duration * progress;
+      });
+
+      this.video.addEventListener('timeupdate', () => {
+        const currentTime = this.video.currentTime;
+        const duration = this.video.duration;
+        const progress = (currentTime / duration) * 100;
+
+        this.progressTime.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        this.progressBar.style.width = `${progress}%`;
+
+        this.renderSubtitles();
+      });
+
+      this.video.addEventListener("playing", () => {
+        document.querySelector("#video-loading").style.display = "none";
+      });
+
+      this.video.addEventListener("waiting", () => {
+        document.querySelector("#video-loading").style.display = "flex";
+      });
+
+      this.video.addEventListener("ended", () => {
+        if (self.reportTimeInterval)
+          clearInterval(self.reportTimeInterval);
+      });
+
+      this.video.addEventListener("loadedmetadata", () => {
+        document.querySelector("#video-loading").style.display = "none";
+        <% if (history) { %>
+        video.currentTime = <%= history.lastSecond %>;
+        <% } %>
+        video.focus();
+      });
+
+      this.progress.addEventListener("enter", () => {
+        alert("progress clicked");
+      });
+
+      document.addEventListener('keydown', this.handleKeyDown.bind(this));
+
+      this.subtitlesModal.addEventListener('shown.bs.modal', this.listSubtitles.bind(this));
+      this.subtitlesModal.addEventListener('hidden.bs.modal', () => {
+        this.currentMode = "SELECT-CONTROL";
+      });
+    }
+
+    togglePlay() {
+      if (this.video.paused) {
+        this.video.play();
+      } else {
+        this.video.pause();
+      }
+    }
+
+    renderSubtitles() {
+      if (!this.subtitles?.length) return;
+      const currentTime = this.video.currentTime * 1000;
+      const currentSubtitle = this.subtitles.find(subtitle => currentTime >= subtitle.data.start && currentTime <= subtitle.data.end);
+      if (currentSubtitle) {
+        this.subtitlesContainer.textContent = currentSubtitle.data.text;
+      } else {
+        this.subtitlesContainer.textContent = "";
+      }
+    }
+
+    showControls() {
+      this.control.style.bottom = "0";
+      this.controlsVisible = true;
+    }
+
+    hideControls() {
+      this.control.style.bottom = "-50px";
+      this.controlsVisible = false;
+    }
+
+    play() {
+      this.video.play();
+    }
+
+    fetchSubtitle(e) {
+      const fileId = e.target.getAttribute("data-file-id");
+      fetch(`/stream/<%= source.id %>/subtitles/${fileId}`)
+        .then(response => response.json())
+        .then(data => {
+          this.subtitles = data;
+        });
+      bootstrap.Modal.getInstance(this.subtitlesModal).hide();
+    }
+
+    listSubtitles() {
+      const modal = this.subtitlesModal;
+      
+      // const bootstrapModal = new bootstrap.Modal(modal);
+      const fragment = document.createDocumentFragment();
+      
+      // Off button
+      const self = this;
+      const button = document.createElement("button");
+      button.addEventListener("click", function() {
+        self.subtitles = [];
+        self.subtitlesContainer.textContent = "";
+        bootstrap.Modal.getInstance(modal).hide();
+      });
+
+      button.classList.add("subtitle-btn");
+      button.textContent = "Off";
+      fragment.appendChild(button);
+
+      fetch("/stream/<%= source.id %>/subtitles")
+        .then(response => response.json())
+        .then(res => res.data)
+        .then(data => {
+          const modalBody = modal.querySelector(".modal-body");
+          
+          modalBody.innerHTML = "";
+          data.forEach(subtitle => {
+            const fileName = subtitle.attributes.files.forEach((file) => {
+              const button = document.createElement("button");
+              button.addEventListener("click", this.fetchSubtitle.bind(this));
+              button.setAttribute("data-file-id", file.file_id);
+              button.classList.add("subtitle-btn");
+              button.textContent = file.file_name;
+              fragment.appendChild(button);
+            });
+          });
+          modalBody.appendChild(fragment);
+          document.querySelector(".subtitle-btn").focus();
+          this.currentMode = "SUBTITLES";
+        });
+    }
+
+    handleKeyDown(e) {
+      switch(e.keyCode) {
+        case 10009:
+          vp.keyReturn(e);
+          break;
+        case 37: // left
+          vp.keyLeft(e);
+          break;
+        case 39: // right
+          vp.keyRight(e);
+          break;
+        case 38: // up
+          vp.keyUp(e);
+          break;
+        case 40: // down
+          vp.keyDown(e);
+          break;
+        case 13: // enter
+          vp.keyEnter(e);
+          break;
+      }
+
+      this.render();
+    }
+
+    keyLeft() {
+
+      switch (this.currentMode) {
+        case "IDLE":
+          this.askedCurrentTime = this.video.currentTime - 10;
+          this.currentMode = "SEEKING";
+          break;
+        case "SEEKING":
+          this.askedCurrentTime -= 10;
+          break;
+        case "SELECT-CONTROL":
+          this.selectedControl = (this.selectedControl - 1) % this.controlsList.length;
+          break;
+      }
+    }
+
+    keyRight() {
+      switch (this.currentMode) {
+        case "IDLE":
+          this.askedCurrentTime = this.video.currentTime + 10;
+          this.currentMode = "SEEKING";
+          break;
+        case "SEEKING":
+          this.askedCurrentTime += 10;
+          break;
+        case "SELECT-CONTROL":
+          this.selectedControl = (this.selectedControl + 1) % this.controlsList.length;
+          break;
+      }
+    }
+
+    keyUp(e) {
+      switch (this.currentMode) {
+        case "IDLE":
+        case "SELECT-CONTROL":
+          this.controlsList[this.selectedControl].blur();
+          this.currentMode = "IDLE";
+          this.hideControls();
+          break;
+        case "SUBTITLES":
+          e.preventDefault();
+          if (document.activeElement.previousSibling)
+            document.activeElement.previousSibling.focus();
+          else
+            document.querySelectorAll(".subtitle-btn")[document.querySelectorAll(".subtitle-btn").length - 1].focus();
+          break;
+      }
+
+    }
+
+    keyDown(e) {
+      switch (this.currentMode) {
+        case "IDLE":
+          this.showControls();
+          this.currentMode = "SELECT-CONTROL";
+          this.selectedControl = 0;
+          break;
+        case "SUBTITLES":
+          e.preventDefault();
+          if (document.activeElement.nextSibling)
+            document.activeElement.nextSibling.focus();
+          else
+            document.querySelector(".subtitle-btn").focus();
+          break;
+      }
+    }
+
+    keyReturn() {
+      if (this.currentMode === "SUBTITLES") {
+        bootstrap.Modal.getInstance(this.subtitlesModal).hide();
+        this.currentMode = "IDLE";
+      } else if (this.controlsVisible) {
+        this.hideControls();
+      } else {
+        window.location.href = "<%= source.tvId ? "/tv/" + source.tvId : "/movies/" + source.movieId %>";
+      }
+    }
+
+    keyEnter() {
+      switch (this.currentMode) {
+        case "SEEKING":
+          this.video.currentTime = this.askedCurrentTime;
+          this.currentMode = "IDLE";
+          clearTimeout(this.hideControlTimeout);
+          break;
+        case "IDLE":
+          if (this.video.paused) {
+            this.video.play();
+            this.hideControls();
+          } else {
+            clearTimeout(this.hideControlTimeout);
+            this.video.pause();
+            this.showControls();
+          }
+          break;
+        case "SELECT-CONTROL":
+          if (this.progress === this.controlsList[this.selectedControl]) {
+            this.currentMode = "SEEKING";
+            this.progress.blur();
+            this.askedCurrentTime = this.video.currentTime;
+          }
+          break;
+      }
+    }
+
+    render() {
+      switch (this.currentMode) {
+        case "SEEKING":
+          this.showControls();
+          this.progressSeeker.style.display = "block";
+          this.progressSeeker.style.left = `${(this.askedCurrentTime / this.video.duration) * 100}%`;
+          this.progressSeekerTime.textContent = formatTime(this.askedCurrentTime);
+          break;
+        case "IDLE":
+          this.progressSeeker.style.display = "none";
+          break;
+        case "SELECT-CONTROL":
+          this.controlsList[this.selectedControl].focus();
+          break;
+      }
+    }
+  }
+
+  const vp = new VideoPlayer();
+  
+  document.body.style.overflow = "hidden";
+  document.body.style.backgroundColor = "black";
+  vp.setupEventListener();
+  vp.play();
+  window.addEventListener("load", () => {
+    vp.startReportingTime();
+  });
+
+  function load() {
+
+  }
+
+</script>
+
+<%- include('footer') %>

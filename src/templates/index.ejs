@@ -1,0 +1,165 @@
+<%- include('header'); -%>
+
+<div class="container p-5">
+  <h1 class="text-center my-5">Homeflix</h1>
+
+  <div id="movies-tvs-toggle">
+    <button id="movies" class="active">
+      Movies
+    </button>
+    <button id="tv-shows">
+      TV Shows
+    </button>
+  </div>
+
+  <div class="card" style="width: 800px; margin: auto">
+    <div class="card-body">
+      <form method="post" action="/stream" class="form-control-inline">
+        <div class="mb-3">
+          <input type="search" class="form-control" id="query" name="query" required autocomplete="off" list="search-results" data-focusable>
+          <div id="search-results">
+            <ul id="search-suggestions">
+              <!-- Suggestions will be rendered here -->
+            </ul>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <% if (history?.length > 0) {%>
+  <div>
+    <h2 class="mt-5">Continue Watching</h2>
+    <div class="d-flex flex-wrap continue-watching">
+      <% history.forEach(item => { %>
+      <div class="card m-2" style="width: 200px;position: relative;">
+        <a href="/stream/<%= item.sourceId %>" data-focusable>
+          <img src="https://image.tmdb.org/t/p/w440_and_h660_face<%= item.movie.poster_path %>" class="card-img">
+          <div class="play"><i class="bi bi-play-circle-fill"></i></div>
+        </a>
+        <div style="width: <%= item.lastSecond / item.duration * 100 %>%; height: 20px; background-color: red; position: absolute; bottom: 0"></div>
+      </div>
+      <% }); %>
+  </div>
+  <% } %>
+</div>
+
+<template>
+  <li class="search-item">
+    <a data-focusable>
+      <div class="d-flex">
+        <div class="search-item-thumbnail">
+          <img src="https://media.themoviedb.org/t/p/w440_and_h660_face/m2H7hvAgteptfOLhBr4WEMdg2VY.jpg" alt="thumbnail">
+        </div>
+        <div class="search-item-content">
+          <h3 class="search-item-title">Title</h3>
+          <p class="search-item-overview text-truncate">Overview</p>
+        </div>
+      </div>
+    </a>
+  </li>
+</template>
+
+<script>
+  (function() {
+
+    let activeTab = 'movies';
+
+    document.querySelector('#movies').addEventListener('click', function() {
+      activeTab = 'movies';
+      this.classList.add('active');
+      document.querySelector('#tv-shows').classList.remove('active');
+    });
+
+    document.querySelector('#tv-shows').addEventListener('click', function() {
+      activeTab = 'tv';
+      this.classList.add('active');
+      document.querySelector('#movies').classList.remove('active');
+    });
+
+
+    const input = document.querySelector('#query');
+    const renderSuggestions = (data) => {
+      const template = document.querySelector('template');
+      const ul = document.querySelector('#search-suggestions');
+
+
+      ul.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+
+      data.forEach((item, index) => {
+        const clone = template.content.cloneNode(true);
+        const title = clone.querySelector('.search-item-title');
+        const overview = clone.querySelector('.search-item-overview');
+        const thumbnail = clone.querySelector('img');
+        const a = clone.querySelector('a');
+        const li = clone.querySelector('li');
+
+        title.textContent = item.title;
+        overview.textContent = item.overview.substring(0, 100);
+        thumbnail.src = `https://image.tmdb.org/t/p/w440_and_h660_face${item.poster_path}`;
+        a.href = `/${activeTab}/${item.id}`;
+        fragment.appendChild(clone);
+      });
+
+      ul.appendChild(fragment);
+    };
+    
+
+    function search(query) {
+      const url = activeTab === 'movies' ? '/api/search' : '/api/search/tv';
+
+      fetch(`${url}?q=${query}`)
+        .then(response => response.json())
+        .then(data => {
+          renderSuggestions(data);
+        });
+    }
+
+    input.addEventListener('input',
+      _.debounce(function(e) {
+        search(e.target.value);
+      }, 300)
+    );
+
+ 
+
+  })();
+
+  window.onload = function() {
+    const currentSelect = null;
+    const input = document.querySelector('#query');
+
+    document.addEventListener('keydown', function (e) {
+        // Select focusable elements using the custom attribute
+        const focusableElements = Array.from(document.querySelectorAll('[data-focusable]'));
+        const currentIndex = focusableElements.indexOf(document.activeElement);
+
+        if (e.keyCode === 40 || e.keyCode === 39) {
+            const nextIndex = (currentIndex + 1) % focusableElements.length;
+            focusableElements[nextIndex].focus();
+            e.preventDefault();
+        } else if (e.keyCode === 38 || e.keyCode === 37) {
+            const prevIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+            focusableElements[prevIndex].focus();
+            e.preventDefault();
+        }
+    });
+
+    // document.addEventListener('keydown', function(e) {
+    //   console.log(e.keyCode);
+    //   switch(e.keyCode) {
+    //     case 10009:
+    //       window.location.reload();
+    //       break;
+    //     case 37:
+    //       if (currentSelect) {
+    //         input.focus();
+    //       }
+    //       break;
+    //   }
+    // });
+    
+  };
+</script>
+
+<%- include('footer'); -%>

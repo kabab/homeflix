@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id            Int @id @default(autoincrement())
+  movieHistory  MovieHistory[]
+  tvHistory     TvHistory[]
+  movieId       Int?
+  tvId          Int?
+  episode       Int? // is set if the source has one episode
+  season        Int?  // is set if the source has just one season
+  torrent       Json
+
+  createdAt     DateTime @default(now())
+}
+
+model MovieHistory {
+  id            Int      @id @default(autoincrement())
+  type          String
+  source        Source @relation(fields: [sourceId], references: [id])
+  sourceId      Int      
+  movieId       Int     @unique
+  lastSecond    Int
+  duration      Int     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TvHistory {
+  id            Int      @id @default(autoincrement())
+  type          String
+  source        Source @relation(fields: [sourceId], references: [id])
+  sourceId      Int      @unique
+  tvId          Int
+  episode       Int?
+  season        Int?
+  lastSecond    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

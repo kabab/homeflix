@@ -1,0 +1,58 @@
+<%- include('header'); -%>
+
+<div class="container p-5">
+  <div id="movie-details" class="d-flex">
+    <div class="image-poster">
+      <img src="https://image.tmdb.org/t/p/w440_and_h660_face<%= tv.poster_path %>" alt="poster">
+    </div>
+    <div class="px-3">
+      <h1 class="title"><%= tv.name %></h1>
+      <p class="overview">
+        <%= tv.overview %>
+      </p>
+      <h3>Season <%= season %> - Episode <%= episode %></h3>
+      <div id="tv-sources">
+        <div class="tv-sources">
+          <% sources.forEach(source => { %>
+          <a href="/tv/<%= tv.id %>/s/<%= season %>/e/<%= episode %>/<%= source.base64 %>" class="tv-source" tabindex="0"><%= source.title %> (<%= source.size %>) - <%= source.provider %></a>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+  document.addEventListener('keydown', function(e) {
+    console.log(e.keyCode);
+    switch(e.keyCode) {
+      case 10009:
+        window.location.href = '/tv/<%= tv.id %>';
+        break;
+      case 13: //keydown
+        const activeElement = document.activeElement;
+        if (activeElement.classList.contains('tv-source')) {
+          const source = activeElement.innerText.split(' - ')[0];
+          window.location.href = `/stream/${source}`;
+        }
+        break;
+    }
+
+    const focusableElements = Array.from(document.querySelectorAll('a'));
+    const currentIndex = focusableElements.indexOf(document.activeElement);
+
+    if (e.keyCode === 40 || e.keyCode === 39) {
+        const nextIndex = (currentIndex + 1) % focusableElements.length;
+        focusableElements[nextIndex].focus();
+        e.preventDefault();
+    } else if (e.keyCode === 38 || e.keyCode === 37) {
+        const prevIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+        focusableElements[prevIndex].focus();
+        e.preventDefault();
+    }
+  });
+
+</script>
+
+<%- include('footer'); -%>

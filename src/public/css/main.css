@@ -1,0 +1,364 @@
+#query {
+  /* width: 400px; */
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+#avplayer {
+  width: 100%;
+  height: 100vh;
+}
+
+#search-results {
+  position: relative;
+}
+
+#search-suggestions {
+  list-style: none;
+  background: #333;
+  position: absolute;
+  z-index: 1000;
+  padding: 0;
+  width: 100%;
+}
+
+.search-item-thumbnail {
+  width: 60px;
+}
+
+.search-item-thumbnail img {
+  width: 60px;
+}
+
+.search-item-content {
+  padding-left: 16px;
+  flex: 1 1 auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.search-item {
+  padding: 4px 0px;
+  border-bottom: 1px solid #555;
+}
+
+.search-item:focus-within {
+  background: #444;
+}
+
+.search-item:last-child {
+  margin-bottom: 0;
+}
+
+.search-item:hover {
+  background: #444;
+  cursor: pointer;
+}
+
+.search-item a {
+  all: unset;
+}
+
+.torrent-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-wrap: wrap;  
+}
+
+.torrent-item {
+  border-radius: 5px;
+  margin: 8px 8px 0 0;
+  padding: 8px;
+  background-color: #333;
+  border: 1px solid #555;
+  height: 70px;
+  overflow: hidden;
+}
+
+.torrent-item .title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.torrent-item .title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.torrent-item a {
+  text-decoration: none;
+  color: white;
+}
+
+.torrent-item:focus-within {
+  background: #777;
+}
+
+.torrent-item:hover {
+  background: #444;
+  cursor: pointer;
+}
+
+#video {
+  width: 100%;
+  height: 100vh;
+}
+
+#control {
+  background-color: rgba(100, 100, 100, 0.5);
+  position: fixed;
+  color: white;
+  bottom: -50px;
+  width: 100%;
+  height: 50px;
+  align-items: center;
+  display: flex;
+  transition: all 0.5s;
+}
+
+#play-pause, #subtitles {
+  font-size: 30px;
+  width: 50px;
+  height: 50px;
+  background: transparent;
+  color: white;
+  border: none;
+}
+
+#play-pause.play > .bi-play-fill {
+  display: none;
+}
+
+#play-pause.play > .bi-pause-fill {
+  display: block;
+}
+
+#play-pause.pause > .bi-play-fill {
+  display: block;
+}
+
+#play-pause.pause > .bi-pause-fill {
+  display: none;
+}
+
+#progress {
+  padding: 0 16px;
+  flex: 1;
+  align-items: center;
+  height: 100%;
+}
+
+#progress-bar-container {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  background-color: #777;
+}
+
+#progress-seeker {
+  position: absolute;
+  height: 18px;
+  top: -6px;
+  background-color: #333;
+  width: 5px;
+  display: none;
+}
+
+#progress-seeker-time {
+  position: absolute;
+  top: -18px;
+  left: -28px;
+}
+
+#progress-bar {
+  margin-top: 24px;
+  border-bottom: 2px solid white;
+  border-top: 2px solid white;
+  width: 70%;
+}
+
+#video:focus {
+  outline: none;
+}
+
+#control:focus-within {
+  bottom: 0;
+}
+
+#subtitles {
+  font-size: 24px;
+  padding-top: 5px;
+  margin-right: 16px;
+}
+
+#control button:focus {
+  border: 3px solid #555;
+}
+
+#control #progress:focus {
+  border: 3px solid #555;
+}
+
+#subtitles-container {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  text-align: center;
+  padding: 0 30%;
+  color: white;
+  font-size: 30px;
+  width: 100%;
+  z-index: 1000;
+}
+
+#video-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.subtitle-btn {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #555;
+  background: #333;
+  padding: 8px;
+  text-align: left;
+}
+
+.subtitle-btn:hover {
+  background: #444;
+}
+
+.subtitle-btn:focus {
+  border: 3px solid #aaa;
+  background-color: #444;
+}
+
+#movies-tvs-toggle {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+#movies-tvs-toggle button {
+  padding: 8px 16px;
+  width: 200px;
+  border: 1px solid #555;
+  background: #333;
+  color: white;
+  outline: none;
+}
+
+#movies-tvs-toggle button:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+#movies-tvs-toggle button:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+#movies-tvs-toggle button:hover {
+  background-color: #444;
+}
+
+#movies-tvs-toggle button:focus {
+  border: 1px solid #aaa;
+  background-color: #444;
+  box-sizing: border-box;
+}
+
+#movies-tvs-toggle button.active {
+  background-color: #666;
+}
+
+
+.tv-source {
+  text-decoration: none;
+  color: white;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  padding: 8px;
+  display: block;
+  width: 600px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tv-source:hover {
+  background: #444;
+}
+
+.tv-source:focus {
+  border: 1px solid #555;
+  background-color: #444;
+}
+
+#video-loading {
+  height: 100vh;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+#video-loading .spinner-border {
+  font-size: 37px;
+}
+
+*:focus {
+  outline: none;
+}
+
+.continue-watching div:focus-within {
+  border: 1px solid white;
+}
+
+.continue-watching div:focus-within .play{
+  display: flex;
+}
+
+.continue-watching > div {
+  position: relative;
+}
+
+.continue-watching div.play {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  /* display: flex; */
+  justify-content: center;
+  align-items: center;
+  display: none;
+}
+
+.continue-watching div.play i {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 80px;
+  transition: all 0.5s;
+}
