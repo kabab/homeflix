@@ -18,10 +18,10 @@ Copy the `.env.example` file to `.env` and fill the required fields:
 cp .env.example .env
 ```
 
-`TMBD_API_KEY`: Your TMDB API key
-`OPENSUBTITLES_API_KEY`: Your Open Subtitles API key
-`OPENSUBTITLES_USERNAME`: Your Open Subtitles username
-`OPENSUBTITLES_PASSWORD`: Your Open Subtitles password
+- `TMBD_API_KEY`: Your TMDB API key
+- `OPENSUBTITLES_API_KEY`: Your Open Subtitles API key
+- `OPENSUBTITLES_USERNAME`: Your Open Subtitles username
+- `OPENSUBTITLES_PASSWORD`: Your Open Subtitles password
 
 ## Usage
 
