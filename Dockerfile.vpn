@@ -11,5 +11,8 @@ apt-get install -y --no-install-recommends wget apt-transport-https ca-certifica
     rm -rf /var/lib/apt/lists/*
 
 USER root
-RUN /etc/init.d/nordvpn start && sleep 5
-CMD ["tail", "-f", "/dev/null"]
+WORKDIR /opt/nordvpn/
+COPY vpn.sh /opt/nordvpn/
+RUN chmod +x vpn.sh
+
+CMD [ "sh", "vpn.sh" ]

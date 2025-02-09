@@ -64,3 +64,21 @@ module.exports.searchMovie = async (movieId) => {
 
   return sources;
 }
+
+module.exports.searchTvShow = async (name, season, episode) => {
+  const formattedSeason = String(season).padStart(2, '0');
+  const formattedEpisode = String(episode).padStart(2, '0');
+  let searchQuery = `${name} S${formattedSeason}`;
+  const torrentSearch = await TorrentSearchApi.search(searchQuery, 'TV', 20);
+  searchQuery = `${name} S${formattedSeason}E${formattedEpisode}`;
+  const sources = torrentSearch.map(torrent => {
+    const distance = fastLevenshtein.get(searchQuery, name);
+    return {
+      ...torrent,
+      distance,
+      base64: Buffer.from(JSON.stringify(torrent)).toString('base64'),
+    }
+  });
+  
+  return _.sortBy(sources, ['distance']);
+}

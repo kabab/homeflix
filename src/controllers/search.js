@@ -1,6 +1,7 @@
 const express = require("express");
 const tmdbAdapter = require("../adapters/tmdb");
 const prisma = require("../lib/prisma");
+const { TvShow } = require("../services/tvShow");
 
 const router = express.Router();
 
@@ -23,11 +24,8 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/api/search", async (req, res) => {
-
-  const movies = await tmdbAdapter.search(req.query.q);
-  const filtredMovies = movies.filter(movie => movie.poster_path).slice(0, 10);
-
-  res.json(filtredMovies);
+  const tvShows = await TvShow.search(req.query.q);
+  res.json(tvShows);
 });
 
 router.get("/api/search/tv", async (req, res) => {

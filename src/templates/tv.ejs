@@ -10,50 +10,109 @@
       <p class="overview">
         <%= tv.overview %>
       </p>
-      <select name="season" id="season" class="form-select" data-focusable>
-        <% tv.seasons.forEach(season => { %>
-        <option value="<%= season.season_number %>">Season <%= season.season_number %></option>
-        <% }); %>
-      </select>
-    </div>
-  </div>
-  <div>
-    <h2 class="mt-5">Episodes</h2>
-    <div class="d-flex flex-wrap">
-      <% tv.season.episodes.forEach(episode => { %>
-      <div class="card m-2" style="width: 200px;">
-        <a href="/tv/<%= tv.id %>/s/<%= tv.season.season_number %>/e/<%= episode.episode_number %>" data-focusable>
-          <img src="https://image.tmdb.org/t/p/w440_and_h660_face<%= episode.still_path %>" class="card-img">
+      <div class="mb-3">
+        <a class="btn btn-primary btn-lg" data-focusable="1" href="">
+          <i class="bi bi-play-fill"></i>
+          Continue Watching
         </a>
       </div>
-      <% }); %>
+      <ul id="tv-show-seasons-list">
+        <% for (var i = 1; i <= tv.number_of_seasons; i++) { %>
+        <li>
+          <button tabindex="-1" data-focusable="2" onclick="selectSeason(<%= i %>)">Season <%= i %></button>
+        </li>
+        <% } %>
+      </ul>
     </div>
   </div>
+  
+</div>
+<div id="season-episode-container">
+  <h2>Episodes</h2>
+  <div id="season-episode">
 
+  </div>
 </div>
 
+<template id="season-episode-template">
+  <a class="m-2 episode" href="" data-focusable="3">
+    <img src="" class="card-img">
+    <div class="episode-watched">
+      <i class="bi bi-eye-fill" style="color: white; font-size: 60px;"></i>
+    </div>
+  </a>
+
+</template>
+
 <script>
+  let currentElement = null;
+  let currentLevel = 0;
+  let currentIndex = 0;
   document.addEventListener('keydown', function(e) {
-    console.log(e.keyCode);
+    
+    const focusableElements = Array.from(document.querySelectorAll('[data-focusable]'));
+    const maxLevel = focusableElements.map(e => e.getAttribute('data-focusable')).reduce((a, b) => Math.max(a, b), 1);
     switch(e.keyCode) {
       case 10009:
+        e.preventDefault();
         window.location.href = '/';
+        break;
+      case 40: // Down
+        e.preventDefault();
+        currentLevel = (currentLevel + 1) % (maxLevel + 1);
+        currentIndex = 0;
+        break;
+      case 39: // Right
+        e.preventDefault();
+        currentIndex += 1;
+        break;
+      case 38: // Up
+        e.preventDefault();
+        currentLevel = (currentLevel - 1 + (maxLevel + 1)) % (maxLevel + 1);
+        currentIndex = 0;
+        break;
+      case 37: // Left
+        e.preventDefault();
+        if (currentIndex > 0) {
+          currentIndex -= 1;
+        }
         break;
     }
 
-    const focusableElements = Array.from(document.querySelectorAll('[data-focusable]'));
-    const currentIndex = focusableElements.indexOf(document.activeElement);
-
-    if (e.keyCode === 40 || e.keyCode === 39) {
-        const nextIndex = (currentIndex + 1) % focusableElements.length;
-        focusableElements[nextIndex].focus();
-        e.preventDefault();
-    } else if (e.keyCode === 38 || e.keyCode === 37) {
-        const prevIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
-        focusableElements[prevIndex].focus();
-        e.preventDefault();
+    const levelFocusableElements = Array.from(document.querySelectorAll(`[data-focusable="${currentLevel}"]`));
+    if (levelFocusableElements.length > 0) {
+      currentIndex = currentIndex % levelFocusableElements.length;
+      levelFocusableElements[currentIndex].focus();
     }
   });
+
+  function showEpisodes(episodes) {
+    document.getElementById('season-episode').innerHTML = '';
+    const template = document.getElementById('season-episode-template');
+    const episodesContainer = document.createDocumentFragment();
+    episodes.forEach(episode => {
+      if (episode.data.still_path) {
+        const episodeElement = template.content.cloneNode(true);
+        const imgElement = episodeElement.querySelector('img');
+        imgElement.src = `https://image.tmdb.org/t/p/w440_and_h660_face${episode.data.still_path}`;
+        const aElement = episodeElement.querySelector('a');
+        aElement.href = `/tv/<%= tv.id %>/s/${episode.season}/e/${episode.data.episode_number}`;
+        episodeElement.querySelector('.episode-watched').style.display = episode.watched ? 'flex' : 'none';
+        episodesContainer.appendChild(episodeElement);
+      }
+    });
+    document.getElementById('season-episode-container').style.top = '400px';
+    document.getElementById('season-episode').appendChild(episodesContainer);
+  }
+
+  function selectSeason(season) {
+    document.getElementById('season-episode-container').style.top = '700px';
+    fetch(`/tv/<%= tv.id %>/s/${season}`)
+      .then(response => response.json())
+      .then(data => {
+        showEpisodes(data);
+      });
+  }
 </script>
 
 <%- include('footer'); -%>

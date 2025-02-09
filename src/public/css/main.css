@@ -362,3 +362,77 @@ body {
   font-size: 80px;
   transition: all 0.5s;
 }
+
+#season-episode-container {
+  width: 100%;
+  overflow: auto;
+  position: fixed;
+  top: 1200px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 8px;
+  transition: all 0.5s;
+}
+
+#season-episode {
+  scrollbar-width: 0;
+  -ms-overflow-style: none;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+#season-episode::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+#season-episode .episode {
+  width: 200px;
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+#season-episode .episode:focus {
+  border: 3px solid rgba(255, 255, 255, 0.5);
+}
+
+#season-episode .episode .episode-watched {
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  position: absolute;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+#season-episode .episode .episode-watched .watched {
+  display: flex;
+}
+
+#tv-show-seasons-list {
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+#tv-show-seasons-list li {
+  display: inline-block;
+  border: 3px solid #aaa;
+  padding: 8px;
+  cursor: pointer;
+  margin-right: 8px;
+  font-size: 24px;
+  border-radius: 8px;
+}
+
+#tv-show-seasons-list li button {
+  all: unset;
+}
+
+#tv-show-seasons-list li:focus-within {
+  background-color: #bbb;
+  color: black;
+}

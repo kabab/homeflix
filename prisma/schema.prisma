@@ -19,7 +19,8 @@ model Source {
   episode       Int? // is set if the source has one episode
   season        Int?  // is set if the source has just one season
   torrent       Json
-
+  filename      String?
+  subtitleId    Int?
   createdAt     DateTime @default(now())
 }
 
@@ -39,11 +40,14 @@ model TvHistory {
   id            Int      @id @default(autoincrement())
   type          String
   source        Source @relation(fields: [sourceId], references: [id])
-  sourceId      Int      @unique
+  sourceId      Int
   tvId          Int
   episode       Int?
   season        Int?
+  duration      Int     @default(0)
   lastSecond    Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@unique([sourceId, tvId, episode, season])
 }

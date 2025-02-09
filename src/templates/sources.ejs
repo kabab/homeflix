@@ -10,11 +10,14 @@
       <p class="overview">
         <%= tv.overview %>
       </p>
-      <h3>Season <%= season %> - Episode <%= episode %></h3>
+      <h3>Season <%= episode.season %> - Episode <%= episode.episode %></h3>
       <div id="tv-sources">
         <div class="tv-sources">
           <% sources.forEach(source => { %>
-          <a href="/tv/<%= tv.id %>/s/<%= season %>/e/<%= episode %>/<%= source.base64 %>" class="tv-source" tabindex="0"><%= source.title %> (<%= source.size %>) - <%= source.provider %></a>
+          <a href="/tv/<%= tv.id %>/s/<%= episode.season %>/e/<%= episode.episode %>/<%= source.base64 %>" class="tv-source" tabindex="0">
+              <%= source.title %> (<%= source.size %>) - <%= source.provider %><br>
+              <small><%= source.seeds %> - <%= source.peers %></small>
+            </a>
           <% }); %>
         </div>
       </div>

@@ -1,6 +1,7 @@
 const OS = require('opensubtitles.com');
 const subtitle = require('subtitle');
-
+const levenshtein = require('fast-levenshtein');
+const _ = require('lodash');
 let os = null;
 
 (async function getOSClient() {
@@ -31,8 +32,14 @@ module.exports.listSubtitles = async function listSubtitles(filename) {
       query: filename,
       languages: "en",
     });
+    subs.data.map(sub => {
+      sub.distance = levenshtein.get(filename, sub.attributes.files?.[0].file_name, {
+        useCollator: true,
+      });
+      return sub;
+    });
 
-    return subs;
+    return _.sortBy(subs.data, ['distance']);
   }
 
   return [];

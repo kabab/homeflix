@@ -71,19 +71,20 @@
       this.subtitlesButton = document.querySelector("#subtitles");
       this.subtitlesContainer = document.querySelector("#subtitles-container");
       this.subtitlesModal = document.querySelector("#subtitle-modal");
-      this.lastReportedTime = 120;
+      this.lastReportedTime = <% if (episode) { %> 5 <% } else { %> 90 <% } %>;
       this.controlsVisible = false;
       this.hideControlTimeout = null;
       this.askedCurrentTime = 0;
       this.currentMode = "IDLE";
       this.selectedControl = 0;
+      this.type = <% if (episode) { %>"tv"<% } else { %>"movie"<% } %>;
       this.reportTimeInterval = null;
       this.subtitles = [];
       this.controlsList = [
         this.playPauseButton,
         this.subtitlesButton,
         this.progress,
-      ]
+      ];
     }
 
     /***
@@ -96,17 +97,16 @@
     }
 
     startReportingTime() {
-      this.reportTimeInterval = setInterval(this.reportCurrentTime.bind(this), 30000);
+      this.reportTimeInterval = setInterval(this.reportCurrentTime.bind(this), 10000);
     }
 
     reportCurrentTime() {
 
-      if (this.video.paused || this.lastReportedTime + 30 > this.video.currentTime) {
+      if (this.video.paused || this.lastReportedTime + 10 > this.video.currentTime) {
         return;
       }
 
       this.lastReportedTime = this.video.currentTime;
-
 
       fetch("/history/movies/<%= source.id %>", {
         method: "POST",
@@ -201,6 +201,11 @@
       this.subtitlesModal.addEventListener('hidden.bs.modal', () => {
         this.currentMode = "SELECT-CONTROL";
       });
+
+      // load subtitles
+      <% if (source.subtitleId) { %>
+      this.fetchSubtitle(<%= source.subtitleId %>);
+      <% } %>
     }
 
     togglePlay() {
@@ -236,14 +241,18 @@
       this.video.play();
     }
 
-    fetchSubtitle(e) {
+    fetchSubtitleHandler(e) {
       const fileId = e.target.getAttribute("data-file-id");
-      fetch(`/stream/<%= source.id %>/subtitles/${fileId}`)
+      this.fetchSubtitle(fileId);
+      bootstrap.Modal.getInstance(this.subtitlesModal).hide();
+    }
+
+    fetchSubtitle(id) {
+      fetch(`/stream/<%= source.id %>/subtitles/${id}`)
         .then(response => response.json())
         .then(data => {
           this.subtitles = data;
         });
-      bootstrap.Modal.getInstance(this.subtitlesModal).hide();
     }
 
     listSubtitles() {
@@ -267,7 +276,6 @@
 
       fetch("/stream/<%= source.id %>/subtitles")
         .then(response => response.json())
-        .then(res => res.data)
         .then(data => {
           const modalBody = modal.querySelector(".modal-body");
           
@@ -275,7 +283,7 @@
           data.forEach(subtitle => {
             const fileName = subtitle.attributes.files.forEach((file) => {
               const button = document.createElement("button");
-              button.addEventListener("click", this.fetchSubtitle.bind(this));
+              button.addEventListener("click", this.fetchSubtitleHandler.bind(this));
               button.setAttribute("data-file-id", file.file_id);
               button.classList.add("subtitle-btn");
               button.textContent = file.file_name;
